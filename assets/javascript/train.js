@@ -12,21 +12,18 @@
   firebase.initializeApp(config);
 
  var database = firebase.database();
- var trainName ="";
- var destination ="";
- var firstTrain ="";
- var frequency ="";
+ 
  
 
-
+//click function for adding trains
 $("#add-train-btn").on("click", function(event){
   event.preventDefault();
-   trainName = $("#train-name-input").val().trim();
-   destination = $("#destination-input").val().trim();
-   firstTrain = moment($("#firstTrain-input").val().trim(), "HH:mm").format("X");
-   frequency = ($("#frequency-input").val().trim());
+    var trainName = $("#train-name-input").val().trim();
+    var destination = $("#destination-input").val().trim();
+    var firstTrain = moment($("#firstTrain-input").val().trim(), "HH:mm").subtract(10, "years").format("X");
+   var frequency = $("#frequency-input").val().trim();
    console.log(firstTrain);
-
+//local object for holding train data
    var newTrain = {
      trainName: trainName,
      destination: destination,
@@ -34,6 +31,7 @@ $("#add-train-btn").on("click", function(event){
      frequency: frequency,
      dateAdded: firebase.database.ServerValue.TIMESTAMP
    };
+ //uploads train data to firebase  
    database.ref().push(newTrain);
    //Clear forms after submit button is clicked.
    $("#train-name-input").val("");
@@ -46,23 +44,23 @@ $("#add-train-btn").on("click", function(event){
 
    database.ref().on("child_added", function(snap){
 
-
+//store info from database into varibles
     var trainNameNew = snap.val().trainName;
     var destinationNew  = snap.val().destination;
-    var firstTrainNew = moment((snap.val().firstTrain),"hh:mm");
-    var frequencyNew = (snap.val().frequency);
-    var nextArrival = "";
-    var minutesAway = "";
-    console.log(firstTrainNew);
+    var frequencyNew = snap.val().frequency;
+    var firstTrainNew = snap.val().firstTrain;
+    
+    
+    console.log(frequencyNew);
 
-    var now = moment();
-//I HATE MOMENT.JS
-    var firstTrainPretty = moment(firstTrainNew).format("HH:mm a");
-     console.log(firstTrainPretty);
-
-     var difference = now.diff(moment(firstTrainPretty), "minutes");
-     console.log("DIFFERENCE IN TIME: " + difference);
      
+//calculates time of arrival and minutes until next train
+    var firstTrainPretty = moment().diff(moment.unix(firstTrainNew), "minutes");
+    var tReminder = moment().diff(moment.unix(firstTrainNew), "minutes") % frequencyNew;
+    console.log(firstTrainPretty);
+    var minutesAway = frequencyNew - tReminder;
+    console.log(minutesAway);
+    var nextArrival = moment().add(minutesAway, "m").format("hh:mm A");
     
     
 
